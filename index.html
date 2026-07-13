@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bài Kiểm Tra: Sales Trực Booth Destino Centro </title>
+    <title>Bài Kiểm Tra: Sales Trực Booth Destino Centro</title>
     <style>
         :root { --primary: #0284c7; --bg: #f0f9ff; --text: #0f172a; --border: #cbd5e1; --success: #16a34a; --danger: #dc2626; }
         body { font-family: 'Arial', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
@@ -19,7 +19,9 @@
         button:hover { background: #0369a1; }
         button:disabled { background: #94a3b8; cursor: not-allowed; }
 
-        .timer { font-size: 22px; font-weight: bold; color: var(--danger); text-align: right; margin-bottom: 20px; position: sticky; top: 10px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #fee2e2; z-index: 100; }
+        .timer-container { text-align: right; margin-bottom: 20px; position: sticky; top: 10px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #fee2e2; z-index: 100; display: flex; justify-content: flex-end; align-items: center; gap: 10px;}
+        .timer-text { font-size: 18px; font-weight: bold; color: #475569; }
+        .timer { font-size: 24px; font-weight: bold; color: var(--danger); display: inline-block; }
         
         .question-block { margin-bottom: 25px; padding: 20px; border: 1px solid var(--border); border-radius: 8px; background: #fafaf9; }
         .q-title { font-size: 17px; font-weight: bold; margin-bottom: 15px; line-height: 1.5; }
@@ -36,6 +38,7 @@
         <p>30 Câu Hỏi | 30 Phút | Ngưỡng đạt: 24/30</p>
     </div>
 
+    <!-- MÀN HÌNH ĐĂNG NHẬP -->
     <div id="auth-screen">
         <h3 style="text-align: center; margin-bottom: 20px;">Vui lòng nhập thông tin nhân sự</h3>
         <label>Họ và tên nhân viên:</label>
@@ -45,15 +48,21 @@
         <button onclick="startQuiz()">Bắt Đầu Làm Bài</button>
     </div>
 
+    <!-- MÀN HÌNH LÀM BÀI -->
     <div id="quiz-screen" class="hidden">
-        <div class="timer">Thời gian còn lại: <span id="time-left">30:00</span></div>
+        <div class="timer-container">
+            <span class="timer-text">Thời gian còn lại: </span>
+            <span class="timer" id="time-left">30:00</span>
+        </div>
         <div id="questions-container">
-            </div>
+            <!-- Render câu hỏi bằng JS -->
+        </div>
         <button id="btn-submit" onclick="submitQuiz()" style="background: var(--success); margin-top: 20px; font-size: 18px;">NỘP BÀI</button>
     </div>
 
+    <!-- MÀN HÌNH KẾT QUẢ -->
     <div id="result-screen" class="hidden" style="text-align: center;">
-        <h2 style="color: var(--success); font-size: 32px;">Đã ghi nhận kết quả!</h2>
+        <h2 id="result-title" style="color: var(--success); font-size: 32px;">Đã ghi nhận kết quả!</h2>
         <div id="final-score" style="font-size: 24px; font-weight: bold; margin: 20px 0;"></div>
         <p id="pass-status" style="font-size: 18px; font-weight: bold; padding: 10px; border-radius: 8px;"></p>
         <p style="color: #64748b; margin-top: 20px;">Hệ thống đã tự động đẩy kết quả thi về máy chủ.</p>
@@ -61,165 +70,45 @@
 </div>
 
 <script>
-    // DÁN LINK GOOGLE APPS SCRIPT VÀO ĐÂY NHÉ
+    // LINK GOOGLE APPS SCRIPT
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwEmFmiUskt0rFO85u8dw1ZQkQcBdPvF24hKI9_WVYTuk4kZczBFfvbVxPynDpb6vMVKQ/exec"; 
     
-    // Cập nhật lại thời gian theo đề chính thức
     const DURATION_MINUTES = 30; 
     const PASSING_SCORE = 24;
+    const LOCK_MINUTES = 90; // Phạt chờ 90 phút nếu thi rớt
 
     // BỘ ĐỀ CHÍNH THỨC 30 CÂU
     let QUIZ_DATA = [
-        {
-            id: "q1", question: "Tên gọi 'Destino Centro' bắt nguồn từ tiếng Tây Ban Nha, mang ý nghĩa gì?",
-            options: { A: "'Ngôi nhà mơ ước'", B: "'Điểm đến trung tâm'", C: "'Vùng đất hứa'", D: "'Thành phố ven sông'" },
-            correct: "B"
-        },
-        {
-            id: "q2", question: "Dự án nằm ở cửa ngõ phía nào của TP.HCM và gần khu chợ lớn nào?",
-            options: { A: "Cửa ngõ phía Tây, gần chợ Bình Chánh", B: "Cửa ngõ phía Đông, gần chợ Thủ Đức", C: "Cửa ngõ phía Bắc, gần chợ Hóc Môn", D: "Cửa ngõ phía Nam, gần chợ Bình Điền" },
-            correct: "A"
-        },
-        {
-            id: "q3", question: "Theo định vị của CĐT, chỉ khoảng 3 phút di chuyển, cư dân đã có thể chạm tới địa bàn nào?",
-            options: { A: "Quận 1", B: "Sân bay Tân Sơn Nhất", C: "Huyện Bình Chánh (TP.HCM)", D: "Trung tâm Phú Mỹ Hưng (Quận 7)" },
-            correct: "C"
-        },
-        {
-            id: "q4", question: "Hai tuyến đường lớn của TP.HCM giúp kết nối dự án về Quận 1 và Phú Mỹ Hưng trong khoảng 30 phút là?",
-            options: { A: "Quốc lộ 13 và Điện Biên Phủ", B: "Xa lộ Hà Nội và Phạm Văn Đồng", C: "Trường Chinh và Cộng Hòa", D: "Đại lộ Võ Văn Kiệt và đường Nguyễn Văn Linh" },
-            correct: "D"
-        },
-        {
-            id: "q5", question: "Dự án tọa lạc trên trục giao thông huyết mạch quốc gia nào nối TP.HCM với miền Tây Nam Bộ?",
-            options: { A: "Quốc lộ 20", B: "Quốc lộ 51", C: "Quốc lộ 14", D: "Quốc lộ 1A" },
-            correct: "D"
-        },
-        {
-            id: "q6", question: "Yếu tố nào sau đây KHÔNG phải là lợi thế kết nối được CĐT nhấn mạnh cho dự án?",
-            options: { A: "Kết nối cao tốc TP.HCM - Trung Lương", B: "Mặt tiền Quốc lộ 1A", C: "Chỉ khoảng 5 phút tới Vành đai 3", D: "Chỉ 10 phút tới sân bay quốc tế Long Thành" },
-            correct: "D"
-        },
-        {
-            id: "q7", question: "Sau hơn 16 năm phát triển, Seaholdings hiện có bao nhiêu công ty thành viên?",
-            options: { A: "2 công ty thành viên", B: "7 công ty thành viên", C: "15 công ty thành viên", D: "30 công ty thành viên" },
-            correct: "B"
-        },
-        {
-            id: "q8", question: "Tôn chỉ xuyên suốt mà Seaholdings đặt làm nền tảng kiến tạo giá trị tại Destino Centro là gì?",
-            options: { A: "'Nhanh - nhiều - rẻ'", B: "'Lấy con người làm trung tâm'", C: "'Bán hết bằng mọi giá'", D: "'Lợi nhuận là trên hết'" },
-            correct: "B"
-        },
-        {
-            id: "q9", question: "Dự án nào sau đây KHÔNG thuộc các dự án do Seaholdings thực hiện?",
-            options: { A: "Lago Centro", B: "The Pearl Riverside", C: "Vinhomes Grand Park", D: "Fresca Riverside" },
-            correct: "C"
-        },
-        {
-            id: "q10", question: "Kiến trúc nhà điều hành/nhà bán hàng của dự án lấy cảm hứng từ hình ảnh nào?",
-            options: { A: "Cánh buồm ra khơi", B: "Bông sen đang nở", C: "Những con sóng nhấp nhô", D: "Ngọn núi hùng vĩ" },
-            correct: "C"
-        },
-        {
-            id: "q11", question: "Phong cách thiết kế & nội thất mà Seaholdings theo đuổi tại căn hộ mẫu được mô tả bằng tinh thần nào?",
-            options: { A: "Công nghiệp (industrial) thô mộc, bê tông trần", B: "Tối giản 'Less is more', tông trắng chủ đạo, đậm tinh thần Châu Âu", C: "Á Đông truyền thống, gỗ tối màu chạm khắc", D: "Cổ điển tân baroque nhiều hoa văn mạ vàng" },
-            correct: "B"
-        },
-        {
-            id: "q12", question: "Tổng diện tích khu đất dự án khoảng bao nhiêu?",
-            options: { A: "Hơn 21.500 m² (khoảng 2,15 ha)", B: "Khoảng 500 m²", C: "Khoảng 10 ha", D: "Khoảng 5 ha" },
-            correct: "A"
-        },
-        {
-            id: "q13", question: "Theo cơ cấu sản phẩm công bố, mỗi tầng căn hộ điển hình bố trí khoảng bao nhiêu căn?",
-            options: { A: "Khoảng 4-5 căn/tầng", B: "Khoảng 40-50 căn/tầng", C: "Khoảng 21-22 căn/tầng", D: "Đúng 10 căn/tầng" },
-            correct: "C"
-        },
-        {
-            id: "q14", question: "Loại sản phẩm nào có số lượng ít nhất trong cơ cấu dự án (chỉ khoảng 10 căn)?",
-            options: { A: "Shophouse (khối đế)", B: "Căn hộ 1 phòng ngủ", C: "Căn hộ 2 phòng ngủ", D: "Căn hộ studio" },
-            correct: "A"
-        },
-        {
-            id: "q15", question: "Đặc điểm nào của cơ cấu sử dụng đất cho thấy dự án ưu tiên không gian xanh, mật độ xây dựng thấp?",
-            options: { A: "Dự án hầu như không bố trí đất cây xanh", B: "Đất xây dựng công trình chiếm gần như toàn bộ khu đất", C: "Đất thương mại - dịch vụ chiếm trên 80%", D: "Đất cây xanh - mặt nước và đất sân - đường - bãi xe chiếm phần lớn, lớn hơn đất xây dựng công trình" },
-            correct: "D"
-        },
-        {
-            id: "q16", question: "Ngoài thang máy tốc độ cao, mỗi block còn được trang bị mấy thang bộ thoát hiểm?",
-            options: { A: "Không có thang thoát hiểm", B: "2 thang thoát hiểm", C: "1 thang thoát hiểm", D: "5 thang thoát hiểm" },
-            correct: "B"
-        },
-        {
-            id: "q17", question: "Khu vực khối đế (các tầng thấp) của các block chủ yếu được bố trí công năng gì?",
-            options: { A: "Shophouse thương mại & khu tiện ích - sinh hoạt cộng đồng", B: "Toàn bộ là căn hộ để ở", C: "Nhà máy sản xuất", D: "Bãi đậu xe tải và kho hàng" },
-            correct: "A"
-        },
-        {
-            id: "q18", question: "Từ ban công/logia, cư dân chủ yếu được hướng tầm nhìn ra đâu?",
-            options: { A: "Tường của block đối diện, không có view", B: "Công viên, hồ bơi và thành phố", C: "Bãi đậu xe của trung tâm thương mại", D: "Khu công nghiệp và bãi tập kết vật liệu" },
-            correct: "B"
-        },
-        {
-            id: "q19", question: "Trong cơ cấu loại hình, đâu là dòng căn hộ nhỏ gọn nhất phù hợp người độc thân/đầu tư cho thuê?",
-            options: { A: "Shophouse", B: "Penthouse", C: "Căn hộ studio", D: "Căn hộ 3 phòng ngủ" },
-            correct: "C"
-        },
-        {
-            id: "q20", question: "Điểm đặc biệt trong cam kết bàn giao sản phẩm của Seaholdings tại dự án là gì?",
-            options: { A: "Chỉ bàn giao khi khách thanh toán 100% bằng tiền mặt", B: "Bàn giao thô, khách tự hoàn thiện toàn bộ", C: "Không cam kết thời điểm bàn giao", D: "Bàn giao căn hộ kèm nội thất, với chất lượng công trình đạt chuẩn" },
-            correct: "D"
-        },
-        {
-            id: "q21", question: "Tiện ích nào sau đây KHÔNG nằm trong hệ tiện ích nội khu của dự án?",
-            options: { A: "Sân golf 18 lỗ", B: "Khu vườn BBQ", C: "Khu vui chơi trẻ em", D: "Phố đi bộ & quảng trường xanh" },
-            correct: "A"
-        },
-        {
-            id: "q22", question: "Hệ thống hồ bơi phong cách resort của dự án được bố trí ở khu vực nào?",
-            options: { A: "Khu vực tầng trệt trong nội khu dự án", B: "Trên sân thượng tầng cao nhất mỗi block", C: "Dưới tầng hầm để xe", D: "Ngoài ranh dự án, dùng chung với khu dân cư lân cận" },
-            correct: "A"
-        },
-        {
-            id: "q23", question: "Nhóm khách hàng mục tiêu chính mà dự án hướng tới là ai?",
-            options: { A: "Chỉ người đã nghỉ hưu tìm nhà nghỉ dưỡng", B: "Chỉ giới siêu giàu tìm bất động sản hạng sang", C: "Gia đình trẻ mua ở thực, thu nhập khoảng 25 - 30 triệu/tháng, cần sản phẩm vừa túi tiền", D: "Chỉ nhà đầu tư nước ngoài mua số lượng lớn" },
-            correct: "C"
-        },
-        {
-            id: "q24", question: "Mức đặt cọc giữ chỗ (booking) theo chính sách được truyền thông và tính chất của khoản này là?",
-            options: { A: "20 triệu đồng/căn và được hoàn lại", B: "200 triệu đồng/căn, không hoàn lại", C: "500 triệu đồng/căn, cần trừ vào giá", D: "20 triệu đồng/căn nhưng không được hoàn lại" },
-            correct: "A"
-        },
-        {
-            id: "q25", question: "Chính sách 'ân hạn nợ gốc đến 36 tháng' mang lại lợi ích gì cho người vay mua nhà?",
-            options: { A: "Khách được tặng 36 tháng phí quản lý", B: "Khách được miễn toàn bộ lãi vay trong 36 tháng", C: "Khách không phải trả cả gốc lẫn lãi trong 36 tháng", D: "Trong tối đa 36 tháng đầu, khách chưa phải trả nợ gốc (chỉ trả lãi theo gói), giảm áp lực dòng tiền" },
-            correct: "D"
-        },
-        {
-            id: "q26", question: "Với chính sách ngân hàng hỗ trợ vay tối đa 70% giá trị căn hộ, khách cần chuẩn bị tối thiểu bao nhiêu phần trăm bằng vốn tự có?",
-            options: { A: "Khoảng 30%", B: "Khoảng 70%", C: "Khoảng 10%", D: "Không cần vốn tự có" },
-            correct: "A"
-        },
-        {
-            id: "q27", question: "Khách lớn tuổi e ngại 'ở căn hộ trên cao, lỡ thang máy hỏng thì bất tiện và không an toàn'. Cách phản hồi phù hợp nhất?",
-            options: { A: "Bỏ qua vì đây là lo lắng không đáng kể", B: "Khuyên khách chọn dự án thấp tầng khác cho an toàn", C: "Trấn an bằng thông tin thật: mỗi block có 4 thang máy tốc độ cao và 2 thang thoát hiểm, cùng hệ thống an ninh - kỹ thuật vận hành thường trực", D: "Nói rằng thang máy không bao giờ hỏng nên khách cứ yên tâm" },
-            correct: "C"
-        },
-        {
-            id: "q28", question: "Khách hỏi 'người nước ngoài có mua được không, sở hữu bao lâu?' nhưng sales không nhớ chắc quy định. Ứng xử đúng chuẩn nhất?",
-            options: { A: "Nói rằng người nước ngoài không mua được để khỏi giải thích", B: "Phỏng đoán một mốc thời gian bất kỳ để trả lời cho nhanh", C: "Khẳng định người nước ngoài sở hữu lâu dài như người Việt", D: "Trả lời phần nắm chắc (người nước ngoài được mua, sở hữu 50 năm, không quá 30% số căn) và xác nhận lại chi tiết còn phân vân với nguồn chính thức trước khi khẳng định" },
-            correct: "D"
-        },
-        {
-            id: "q29", question: "Khách phân vân giữa 2 căn và nhờ 'em chọn giùm anh/chị căn nào'. Cách tư vấn chuyên nghiệp nhất?",
-            options: { A: "Chọn đại một căn cho khách quyết định nhanh", B: "Nói cả hai căn đều như nhau, tùy khách", C: "Luôn hướng khách sang căn đang tồn nhiều để dễ bán", D: "Hỏi rõ nhu cầu & ngân sách, phân tích ưu - nhược của từng căn theo tiêu chí của khách, để khách tự đưa ra quyết định" },
-            correct: "D"
-        },
-        {
-            id: "q30", question: "Sau khi khách đã đặt cọc giữ chỗ, hành động chăm sóc sau bán đúng đắn nhất của sales là gì?",
-            options: { A: "Chỉ liên hệ lại khi cần khách đóng thêm tiền", B: "Giữ liên lạc, chủ động cập nhật tiến độ & thủ tục, hỗ trợ hồ sơ vay và đồng hành đến khi hoàn tất", C: "Xem như đã xong việc và chuyển toàn bộ sự chú ý sang khách mới", D: "Chuyển khách cho người khác mà không bàn giao thông tin" },
-            correct: "B"
-        }
+        { id: "q1", question: "Tên gọi 'Destino Centro' bắt nguồn từ tiếng Tây Ban Nha, mang ý nghĩa gì?", options: { A: "'Ngôi nhà mơ ước'", B: "'Điểm đến trung tâm'", C: "'Vùng đất hứa'", D: "'Thành phố ven sông'" }, correct: "B" },
+        { id: "q2", question: "Dự án nằm ở cửa ngõ phía nào của TP.HCM và gần khu chợ lớn nào?", options: { A: "Cửa ngõ phía Tây, gần chợ Bình Chánh", B: "Cửa ngõ phía Đông, gần chợ Thủ Đức", C: "Cửa ngõ phía Bắc, gần chợ Hóc Môn", D: "Cửa ngõ phía Nam, gần chợ Bình Điền" }, correct: "A" },
+        { id: "q3", question: "Theo định vị của CĐT, chỉ khoảng 3 phút di chuyển, cư dân đã có thể chạm tới địa bàn nào?", options: { A: "Quận 1", B: "Sân bay Tân Sơn Nhất", C: "Huyện Bình Chánh (TP.HCM)", D: "Trung tâm Phú Mỹ Hưng (Quận 7)" }, correct: "C" },
+        { id: "q4", question: "Hai tuyến đường lớn của TP.HCM giúp kết nối dự án về Quận 1 và Phú Mỹ Hưng trong khoảng 30 phút là?", options: { A: "Quốc lộ 13 và Điện Biên Phủ", B: "Xa lộ Hà Nội và Phạm Văn Đồng", C: "Trường Chinh và Cộng Hòa", D: "Đại lộ Võ Văn Kiệt và đường Nguyễn Văn Linh" }, correct: "D" },
+        { id: "q5", question: "Dự án tọa lạc trên trục giao thông huyết mạch quốc gia nào nối TP.HCM với miền Tây Nam Bộ?", options: { A: "Quốc lộ 20", B: "Quốc lộ 51", C: "Quốc lộ 14", D: "Quốc lộ 1A" }, correct: "D" },
+        { id: "q6", question: "Yếu tố nào sau đây KHÔNG phải là lợi thế kết nối được CĐT nhấn mạnh cho dự án?", options: { A: "Kết nối cao tốc TP.HCM - Trung Lương", B: "Mặt tiền Quốc lộ 1A", C: "Chỉ khoảng 5 phút tới Vành đai 3", D: "Chỉ 10 phút tới sân bay quốc tế Long Thành" }, correct: "D" },
+        { id: "q7", question: "Sau hơn 16 năm phát triển, Seaholdings hiện có bao nhiêu công ty thành viên?", options: { A: "2 công ty thành viên", B: "7 công ty thành viên", C: "15 công ty thành viên", D: "30 công ty thành viên" }, correct: "B" },
+        { id: "q8", question: "Tôn chỉ xuyên suốt mà Seaholdings đặt làm nền tảng kiến tạo giá trị tại Destino Centro là gì?", options: { A: "'Nhanh - nhiều - rẻ'", B: "'Lấy con người làm trung tâm'", C: "'Bán hết bằng mọi giá'", D: "'Lợi nhuận là trên hết'" }, correct: "B" },
+        { id: "q9", question: "Dự án nào sau đây KHÔNG thuộc các dự án do Seaholdings thực hiện?", options: { A: "Lago Centro", B: "The Pearl Riverside", C: "Vinhomes Grand Park", D: "Fresca Riverside" }, correct: "C" },
+        { id: "q10", question: "Kiến trúc nhà điều hành/nhà bán hàng của dự án lấy cảm hứng từ hình ảnh nào?", options: { A: "Cánh buồm ra khơi", B: "Bông sen đang nở", C: "Những con sóng nhấp nhô", D: "Ngọn núi hùng vĩ" }, correct: "C" },
+        { id: "q11", question: "Phong cách thiết kế & nội thất mà Seaholdings theo đuổi tại căn hộ mẫu được mô tả bằng tinh thần nào?", options: { A: "Công nghiệp (industrial) thô mộc, bê tông trần", B: "Tối giản 'Less is more', tông trắng chủ đạo, đậm tinh thần Châu Âu", C: "Á Đông truyền thống, gỗ tối màu chạm khắc", D: "Cổ điển tân baroque nhiều hoa văn mạ vàng" }, correct: "B" },
+        { id: "q12", question: "Tổng diện tích khu đất dự án khoảng bao nhiêu?", options: { A: "Hơn 21.500 m² (khoảng 2,15 ha)", B: "Khoảng 500 m²", C: "Khoảng 10 ha", D: "Khoảng 5 ha" }, correct: "A" },
+        { id: "q13", question: "Theo cơ cấu sản phẩm công bố, mỗi tầng căn hộ điển hình bố trí khoảng bao nhiêu căn?", options: { A: "Khoảng 4-5 căn/tầng", B: "Khoảng 40-50 căn/tầng", C: "Khoảng 21-22 căn/tầng", D: "Đúng 10 căn/tầng" }, correct: "C" },
+        { id: "q14", question: "Loại sản phẩm nào có số lượng ít nhất trong cơ cấu dự án (chỉ khoảng 10 căn)?", options: { A: "Shophouse (khối đế)", B: "Căn hộ 1 phòng ngủ", C: "Căn hộ 2 phòng ngủ", D: "Căn hộ studio" }, correct: "A" },
+        { id: "q15", question: "Đặc điểm nào của cơ cấu sử dụng đất cho thấy dự án ưu tiên không gian xanh, mật độ xây dựng thấp?", options: { A: "Dự án hầu như không bố trí đất cây xanh", B: "Đất xây dựng công trình chiếm gần như toàn bộ khu đất", C: "Đất thương mại - dịch vụ chiếm trên 80%", D: "Đất cây xanh - mặt nước và đất sân - đường - bãi xe chiếm phần lớn, lớn hơn đất xây dựng công trình" }, correct: "D" },
+        { id: "q16", question: "Ngoài thang máy tốc độ cao, mỗi block còn được trang bị mấy thang bộ thoát hiểm?", options: { A: "Không có thang thoát hiểm", B: "2 thang thoát hiểm", C: "1 thang thoát hiểm", D: "5 thang thoát hiểm" }, correct: "B" },
+        { id: "q17", question: "Khu vực khối đế (các tầng thấp) của các block chủ yếu được bố trí công năng gì?", options: { A: "Shophouse thương mại & khu tiện ích - sinh hoạt cộng đồng", B: "Toàn bộ là căn hộ để ở", C: "Nhà máy sản xuất", D: "Bãi đậu xe tải và kho hàng" }, correct: "A" },
+        { id: "q18", question: "Từ ban công/logia, cư dân chủ yếu được hướng tầm nhìn ra đâu?", options: { A: "Tường của block đối diện, không có view", B: "Công viên, hồ bơi và thành phố", C: "Bãi đậu xe của trung tâm thương mại", D: "Khu công nghiệp và bãi tập kết vật liệu" }, correct: "B" },
+        { id: "q19", question: "Trong cơ cấu loại hình, đâu là dòng căn hộ nhỏ gọn nhất phù hợp người độc thân/đầu tư cho thuê?", options: { A: "Shophouse", B: "Penthouse", C: "Căn hộ studio", D: "Căn hộ 3 phòng ngủ" }, correct: "C" },
+        { id: "q20", question: "Điểm đặc biệt trong cam kết bàn giao sản phẩm của Seaholdings tại dự án là gì?", options: { A: "Chỉ bàn giao khi khách thanh toán 100% bằng tiền mặt", B: "Bàn giao thô, khách tự hoàn thiện toàn bộ", C: "Không cam kết thời điểm bàn giao", D: "Bàn giao căn hộ kèm nội thất, với chất lượng công trình đạt chuẩn" }, correct: "D" },
+        { id: "q21", question: "Tiện ích nào sau đây KHÔNG nằm trong hệ tiện ích nội khu của dự án?", options: { A: "Sân golf 18 lỗ", B: "Khu vườn BBQ", C: "Khu vui chơi trẻ em", D: "Phố đi bộ & quảng trường xanh" }, correct: "A" },
+        { id: "q22", question: "Hệ thống hồ bơi phong cách resort của dự án được bố trí ở khu vực nào?", options: { A: "Khu vực tầng trệt trong nội khu dự án", B: "Trên sân thượng tầng cao nhất mỗi block", C: "Dưới tầng hầm để xe", D: "Ngoài ranh dự án, dùng chung với khu dân cư lân cận" }, correct: "A" },
+        { id: "q23", question: "Nhóm khách hàng mục tiêu chính mà dự án hướng tới là ai?", options: { A: "Chỉ người đã nghỉ hưu tìm nhà nghỉ dưỡng", B: "Chỉ giới siêu giàu tìm bất động sản hạng sang", C: "Gia đình trẻ mua ở thực, thu nhập khoảng 25 - 30 triệu/tháng, cần sản phẩm vừa túi tiền", D: "Chỉ nhà đầu tư nước ngoài mua số lượng lớn" }, correct: "C" },
+        { id: "q24", question: "Mức đặt cọc giữ chỗ (booking) theo chính sách được truyền thông và tính chất của khoản này là?", options: { A: "20 triệu đồng/căn và được hoàn lại", B: "200 triệu đồng/căn, không hoàn lại", C: "500 triệu đồng/căn, cần trừ vào giá", D: "20 triệu đồng/căn nhưng không được hoàn lại" }, correct: "A" },
+        { id: "q25", question: "Chính sách 'ân hạn nợ gốc đến 36 tháng' mang lại lợi ích gì cho người vay mua nhà?", options: { A: "Khách được tặng 36 tháng phí quản lý", B: "Khách được miễn toàn bộ lãi vay trong 36 tháng", C: "Khách không phải trả cả gốc lẫn lãi trong 36 tháng", D: "Trong tối đa 36 tháng đầu, khách chưa phải trả nợ gốc (chỉ trả lãi theo gói), giảm áp lực dòng tiền" }, correct: "D" },
+        { id: "q26", question: "Với chính sách ngân hàng hỗ trợ vay tối đa 70% giá trị căn hộ, khách cần chuẩn bị tối thiểu bao nhiêu phần trăm bằng vốn tự có?", options: { A: "Khoảng 30%", B: "Khoảng 70%", C: "Khoảng 10%", D: "Không cần vốn tự có" }, correct: "A" },
+        { id: "q27", question: "Khách lớn tuổi e ngại 'ở căn hộ trên cao, lỡ thang máy hỏng thì bất tiện và không an toàn'. Cách phản hồi phù hợp nhất?", options: { A: "Bỏ qua vì đây là lo lắng không đáng kể", B: "Khuyên khách chọn dự án thấp tầng khác cho an toàn", C: "Trấn an bằng thông tin thật: mỗi block có 4 thang máy tốc độ cao và 2 thang thoát hiểm, cùng hệ thống an ninh - kỹ thuật vận hành thường trực", D: "Nói rằng thang máy không bao giờ hỏng nên khách cứ yên tâm" }, correct: "C" },
+        { id: "q28", question: "Khách hỏi 'người nước ngoài có mua được không, sở hữu bao lâu?' nhưng sales không nhớ chắc quy định. Ứng xử đúng chuẩn nhất?", options: { A: "Nói rằng người nước ngoài không mua được để khỏi giải thích", B: "Phỏng đoán một mốc thời gian bất kỳ để trả lời cho nhanh", C: "Khẳng định người nước ngoài sở hữu lâu dài như người Việt", D: "Trả lời phần nắm chắc (người nước ngoài được mua, sở hữu 50 năm, không quá 30% số căn) và xác nhận lại chi tiết còn phân vân với nguồn chính thức trước khi khẳng định" }, correct: "D" },
+        { id: "q29", question: "Khách phân vân giữa 2 căn và nhờ 'em chọn giùm anh/chị căn nào'. Cách tư vấn chuyên nghiệp nhất?", options: { A: "Chọn đại một căn cho khách quyết định nhanh", B: "Nói cả hai căn đều như nhau, tùy khách", C: "Luôn hướng khách sang căn đang tồn nhiều để dễ bán", D: "Hỏi rõ nhu cầu & ngân sách, phân tích ưu - nhược của từng căn theo tiêu chí của khách, để khách tự đưa ra quyết định" }, correct: "D" },
+        { id: "q30", question: "Sau khi khách đã đặt cọc giữ chỗ, hành động chăm sóc sau bán đúng đắn nhất của sales là gì?", options: { A: "Chỉ liên hệ lại khi cần khách đóng thêm tiền", B: "Giữ liên lạc, chủ động cập nhật tiến độ & thủ tục, hỗ trợ hồ sơ vay và đồng hành đến khi hoàn tất", C: "Xem như đã xong việc và chuyển toàn bộ sự chú ý sang khách mới", D: "Chuyển khách cho người khác mà không bàn giao thông tin" }, correct: "B" }
     ];
 
     let timerInterval;
@@ -239,6 +128,27 @@
         const agency = document.getElementById('useragency').value.trim();
         if (!name || !agency) { alert("Vui lòng nhập đầy đủ Họ tên và Sàn/Đại lý phân phối!"); return; }
 
+        // --- BẮT ĐẦU CHECK 90 PHÚT ---
+        // Tạo khóa định danh theo tên và đại lý (viết thường hết để chống nhập hoa/thường)
+        const lockKey = `lock_${name.toLowerCase()}_${agency.toLowerCase()}`;
+        const lockedTime = localStorage.getItem(lockKey);
+        
+        if (lockedTime) {
+            const now = new Date().getTime();
+            if (now < parseInt(lockedTime)) {
+                // Tính số phút còn lại phải chờ
+                const diffMs = parseInt(lockedTime) - now;
+                const diffMins = Math.ceil(diffMs / (60 * 1000));
+                
+                alert(`⚠️ Khoan đã bồ ơi!\nLần trước bồ thi chưa đạt. Vui lòng ôn lại bài kỹ hơn và quay lại sau ${diffMins} phút nữa nhé!`);
+                return; // Ngăn không cho thi tiếp
+            } else {
+                // Nếu đã qua 90 phút thì xóa khóa để cho thi lại
+                localStorage.removeItem(lockKey);
+            }
+        }
+        // --- KẾT THÚC CHECK ---
+
         shuffleQuestions(QUIZ_DATA);
 
         document.getElementById('auth-screen').classList.add('hidden');
@@ -246,17 +156,39 @@
 
         renderQuestions();
         
+        // ĐỒNG HỒ "TÂM LINH" TROLL NGƯỜI THI
         timerInterval = setInterval(() => {
-            let m = Math.floor(timeRemaining / 60);
-            let s = timeRemaining % 60;
-            document.getElementById('time-left').innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
-            
+            timeRemaining--;
+            let timerEl = document.getElementById('time-left');
+
             if (timeRemaining <= 0) {
                 clearInterval(timerInterval);
+                timerEl.innerText = "00:00";
                 alert("Hết giờ làm bài! Hệ thống tự động nộp bài.");
                 processSubmission();
+                return;
             }
-            timeRemaining--;
+
+            let isGlitching = Math.random() < 0.25; 
+
+            if (isGlitching) {
+                let fakeM = Math.floor(Math.random() * 4);
+                let fakeS = Math.floor(Math.random() * 99);
+                timerEl.innerText = `${fakeM < 10 ? '0'+fakeM : fakeM}:${fakeS < 10 ? '0'+fakeS : fakeS}`;
+                
+                timerEl.style.color = "red";
+                timerEl.style.transform = `scale(${1 + Math.random() * 0.4}) rotate(${Math.random() * 10 - 5}deg)`;
+                timerEl.style.textShadow = "2px 2px 5px rgba(255,0,0,0.6)";
+                timerEl.style.transition = "0.1s"; 
+            } else {
+                let m = Math.floor(timeRemaining / 60);
+                let s = timeRemaining % 60;
+                timerEl.innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+                
+                timerEl.style.color = "var(--danger)";
+                timerEl.style.transform = "scale(1) rotate(0deg)";
+                timerEl.style.textShadow = "none";
+            }
         }, 1000);
     }
 
@@ -311,6 +243,17 @@
         const name = document.getElementById('username').value;
         const phone = document.getElementById('useragency').value; 
         
+        const isPass = score >= PASSING_SCORE;
+
+        // --- LƯU PHẠT 90 PHÚT NẾU RỚT ---
+        if (!isPass) {
+            const lockKey = `lock_${name.toLowerCase()}_${phone.toLowerCase()}`;
+            // Thời gian hiện tại + (90 phút * 60 giây * 1000 ms)
+            const lockTime = new Date().getTime() + (LOCK_MINUTES * 60 * 1000); 
+            localStorage.setItem(lockKey, lockTime);
+        }
+        // ---------------------------------
+
         const payload = new URLSearchParams();
         payload.append("name", name);
         payload.append("phone", phone);
@@ -328,11 +271,23 @@
             
             document.getElementById('final-score').innerText = `Điểm thi: ${score} / ${QUIZ_DATA.length}`;
             
-            const isPass = score >= PASSING_SCORE;
             const statusEl = document.getElementById('pass-status');
-            statusEl.innerText = isPass ? "🎉 ĐẠT YÊU CẦU" : "❌ CHƯA ĐẠT YÊU CẦU";
-            statusEl.style.backgroundColor = isPass ? "#dcfce7" : "#fee2e2";
-            statusEl.style.color = isPass ? "var(--success)" : "var(--danger)";
+            const titleEl = document.getElementById('result-title');
+            
+            if (isPass) {
+                titleEl.innerText = "Chúc Mừng!";
+                titleEl.style.color = "var(--success)";
+                statusEl.innerText = "🎉 ĐẠT YÊU CẦU";
+                statusEl.style.backgroundColor = "#dcfce7";
+                statusEl.style.color = "var(--success)";
+            } else {
+                titleEl.innerText = "Rất Tiếc!";
+                titleEl.style.color = "var(--danger)";
+                statusEl.innerText = "❌ CHƯA ĐẠT YÊU CẦU (Bị khóa thi 90 phút)";
+                statusEl.style.backgroundColor = "#fee2e2";
+                statusEl.style.color = "var(--danger)";
+            }
+            
         }).catch(err => {
             console.error("Lỗi:", err);
             alert("Đã gửi bài! Vui lòng kiểm tra lại kết nối nếu bảng điểm chưa hiện.");
