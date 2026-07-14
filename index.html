@@ -77,7 +77,8 @@
     const PASSING_SCORE = 24;
     const LOCK_MINUTES = 90; // Phạt chờ 90 phút nếu thi rớt
 
-    // BỘ ĐỀ CHÍNH THỨC 30 CÂU
+    
+// BỘ ĐỀ CHÍNH THỨC 30 CÂU
     let QUIZ_DATA = [
         { id: "q1", question: "Tên gọi 'Destino Centro' bắt nguồn từ tiếng Tây Ban Nha, mang ý nghĩa gì?", options: { A: "'Ngôi nhà mơ ước'", B: "'Điểm đến trung tâm'", C: "'Vùng đất hứa'", D: "'Thành phố ven sông'" }, correct: "B" },
         { id: "q2", question: "Dự án nằm ở cửa ngõ phía nào của TP.HCM và gần khu chợ lớn nào?", options: { A: "Cửa ngõ phía Tây, gần chợ Bình Chánh", B: "Cửa ngõ phía Đông, gần chợ Thủ Đức", C: "Cửa ngõ phía Bắc, gần chợ Hóc Môn", D: "Cửa ngõ phía Nam, gần chợ Bình Điền" }, correct: "A" },
@@ -110,7 +111,7 @@
         { id: "q29", question: "Khách phân vân giữa 2 căn và nhờ 'em chọn giùm anh/chị căn nào'. Cách tư vấn chuyên nghiệp nhất?", options: { A: "Chọn đại một căn cho khách quyết định nhanh", B: "Nói cả hai căn đều như nhau, tùy khách", C: "Luôn hướng khách sang căn đang tồn nhiều để dễ bán", D: "Hỏi rõ nhu cầu & ngân sách, phân tích ưu - nhược của từng căn theo tiêu chí của khách, để khách tự đưa ra quyết định" }, correct: "D" },
         { id: "q30", question: "Sau khi khách đã đặt cọc giữ chỗ, hành động chăm sóc sau bán đúng đắn nhất của sales là gì?", options: { A: "Chỉ liên hệ lại khi cần khách đóng thêm tiền", B: "Giữ liên lạc, chủ động cập nhật tiến độ & thủ tục, hỗ trợ hồ sơ vay và đồng hành đến khi hoàn tất", C: "Xem như đã xong việc và chuyển toàn bộ sự chú ý sang khách mới", D: "Chuyển khách cho người khác mà không bàn giao thông tin" }, correct: "B" }
     ];
-
+    
     let timerInterval;
     let timeRemaining = DURATION_MINUTES * 60;
     let isSubmitting = false;
